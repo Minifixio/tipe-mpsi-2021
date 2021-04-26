@@ -134,7 +134,7 @@ def prod_conv(arr, ker, lum=True, greyscale=False, verbose=False):
 # 1) utiliser un filtre gaussien pour réduire le bruit
 # 2) Utiliser deux gradients (un selon Ox et un selon Oy) pour faire un détection des bords selon les deux axes
 # 3) Combiner les deux gradients selon Ox et Oy pour obtenir un graident optimal obtenu selon la formule G = \sqrt{Gx^2 + Gy^2} (ensuite normalisé)
-def canny_filter(im, verbose, output=False):
+def canny_filter(im, verbose=False, output=False):
 
     arr = np.array(im)
 
@@ -169,7 +169,8 @@ def canny_filter(im, verbose, output=False):
     plt.show()
 
     if output:
-        img.save('output.png')
+        imout = Image.fromarray(grad).convert("L")
+        imout.save('output.jpeg')
 
 def canny_test(img):
     Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
@@ -186,7 +187,7 @@ def canny_test(img):
     plt.show()
     return Ix, Iy
 
-canny_filter(ImageOps.grayscale(Image.open("lena.png")))
+canny_filter(ImageOps.grayscale(Image.open("lena.png")), output=True)
 
 
 
