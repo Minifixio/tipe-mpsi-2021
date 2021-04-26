@@ -118,7 +118,6 @@ def prod_conv(arr, ker, lum=True, greyscale=False, verbose=False):
             for k in range(pxl_size):
                 res[k] += (( arr[i, j][k] if not greyscale else arr[i, j] ) * ker[i, j])
 
-    
     if lum == True:
         res[len(res) - 1] = arr[n//2, n//2][len(arr[n//2, n//2]) - 1]
 
@@ -129,7 +128,13 @@ def prod_conv(arr, ker, lum=True, greyscale=False, verbose=False):
 
     return res
 
-def canny_filter(im):
+
+# Filtre de Canny : permet de faire une détection de bords
+# Etapes :
+# 1) utiliser un filtre gaussien pour réduire le bruit
+# 2) Utiliser deux gradients (un selon Ox et un selon Oy) pour faire un détection des bords selon les deux axes
+# 3) Combiner les deux gradients selon Ox et Oy pour obtenir un graident optimal obtenu selon la formule G = \sqrt{Gx^2 + Gy^2} (ensuite normalisé)
+def canny_filter(im, verbose, output=False):
 
     arr = np.array(im)
 
@@ -143,28 +148,28 @@ def canny_filter(im):
         [0, 0, 0], 
         [1, 2, 1]])
 
-    fgauss = convolulte(arr, gker, greyscale=True)
+    fgauss = convolulte(arr, gker, greyscale=True, verbose=verbose)
 
-    fx = convolulte(fgauss, gx, greyscale=True, verbose=False)
-    fy = convolulte(fgauss, gy, greyscale=True)
+    fx = convolulte(fgauss, gx, greyscale=True, verbose=verbose)
+    fy = convolulte(fgauss, gy, greyscale=True, verbose=verbose)
 
     grad = np.sqrt(np.square(fx) + np.square(fy))
     grad = grad / grad.max() * 255.0
 
     plt.imshow(fx, cmap='gray')
-    plt.title('Selon x (1)')
+    plt.title('Selon x')
     plt.show()
 
     plt.imshow(fx, cmap='gray')
-    plt.title('Selon y (2)')
+    plt.title('Selon y')
     plt.show()
-
 
     plt.imshow(grad, cmap='gray')
     plt.title('Resultat')
     plt.show()
 
-    #img.save('output.png')
+    if output:
+        img.save('output.png')
 
 def canny_test(img):
     Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
@@ -181,7 +186,7 @@ def canny_test(img):
     plt.show()
     return Ix, Iy
 
-print(canny_filter(ImageOps.grayscale(Image.open("lena.png"))))
+canny_filter(ImageOps.grayscale(Image.open("lena.png")))
 
 
 
