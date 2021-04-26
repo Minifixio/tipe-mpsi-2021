@@ -187,7 +187,7 @@ def canny_test(img):
     plt.show()
     return Ix, Iy
 
-canny_filter(ImageOps.grayscale(Image.open("lena.png")), 'lena', output=True)
+canny_filter(ImageOps.grayscale(Image.open("shapes.png")), 'shapes', output=True)
 
 
 
