@@ -5,8 +5,8 @@ import scipy.stats as st
 from scipy import ndimage
 import matplotlib.pyplot as plt
 
-chat_img = Image.open("chat.png")
-chat_img2 = Image.open("chat2.png")
+chat_img = Image.open("images/chat.png")
+chat_img2 = Image.open("images/chat2.png")
 chat_np = np.array(chat_img)
 chat_np2 = np.array(chat_img2)
 
@@ -170,7 +170,7 @@ def canny_filter(im, output_name, verbose=False, output=False):
 
     if output:
         imout = Image.fromarray(grad).convert("L")
-        imout.save(output_name + '_output.jpeg')
+        imout.save('outputs/' + output_name + '_output.jpeg')
 
 def canny_test(img):
     Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
@@ -187,7 +187,7 @@ def canny_test(img):
     plt.show()
     return Ix, Iy
 
-canny_filter(ImageOps.grayscale(Image.open("shapes.png")), 'shapes', output=True)
+canny_filter(ImageOps.grayscale(Image.open("images/shapes.png")), 'shapes', output=True)
 
 
 
