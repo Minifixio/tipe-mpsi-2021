@@ -139,6 +139,7 @@ def canny_filter(im, output_name, verbose=False, output=False):
     arr = np.array(im)
 
     gker = gkern(3, 0.5)
+
     gx = np.array([
         [-1, 0, 1], 
         [-2, 0, 2], 
@@ -172,6 +173,17 @@ def canny_filter(im, output_name, verbose=False, output=False):
         imout = Image.fromarray(grad).convert("L")
         imout.save('outputs/' + output_name + '_output.jpeg')
 
+
+def gaussian_filter(im):
+    arr = np.array(im)
+    gker = gkern(9, 0.5)
+    fgauss = convolulte(arr, gker, greyscale=False, verbose=False)
+
+    plt.imshow(fgauss)
+    plt.title('Resultat')
+    plt.show()
+
+
 def canny_test(img):
     Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
     Ky = np.array([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], np.float32)
@@ -187,7 +199,9 @@ def canny_test(img):
     plt.show()
     return Ix, Iy
 
-canny_filter(ImageOps.grayscale(Image.open("images/shapes.png")), 'shapes', output=True)
+#print(fill_edges_zeros(np.random.rand(3,2), 6, 1))
+#canny_filter(ImageOps.grayscale(Image.open("images/shapes.png")), 'shapes', output=True, verbose=False)
+gaussian_filter(((Image.open("images/chat2.png"))))
 
 
 
