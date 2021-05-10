@@ -4,6 +4,8 @@ import scipy
 import scipy.stats as st
 from scipy import ndimage
 import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
+import scipy.misc
 
 chat_img = Image.open("images/chat.png")
 chat_img2 = Image.open("images/chat2.png")
@@ -134,7 +136,7 @@ def prod_conv(arr, ker, lum=True, greyscale=False, verbose=False):
 # 1) utiliser un filtre gaussien pour réduire le bruit
 # 2) Utiliser deux gradients (un selon Ox et un selon Oy) pour faire un détection des bords selon les deux axes
 # 3) Combiner les deux gradients selon Ox et Oy pour obtenir un graident optimal obtenu selon la formule G = \sqrt{Gx^2 + Gy^2} (ensuite normalisé)
-def canny_filter(im, output_name, verbose=False, output=False):
+def canny_filter(im, threshold, output_name, verbose=False, output=False):
 
     arr = np.array(im)
 
@@ -149,6 +151,12 @@ def canny_filter(im, output_name, verbose=False, output=False):
         [0, 0, 0], 
         [1, 2, 1]])
 
+    laplacian = np.array([
+        [1,1,1],
+        [1,-8,1],
+        [1,1,1]])
+
+
     fgauss = convolulte(arr, gker, greyscale=True, verbose=verbose)
 
     fx = convolulte(fgauss, gx, greyscale=True, verbose=verbose)
@@ -156,18 +164,39 @@ def canny_filter(im, output_name, verbose=False, output=False):
 
     grad = np.sqrt(np.square(fx) + np.square(fy))
     grad = grad / grad.max() * 255.0
+    grad[grad<threshold] = 0
 
-    plt.imshow(fx, cmap='gray')
-    plt.title('Selon x')
-    plt.show()
+    lap = convolulte(grad, laplacian, greyscale=True, verbose=verbose)
 
-    plt.imshow(fx, cmap='gray')
-    plt.title('Selon y')
-    plt.show()
+    (M,N) = lap.shape
 
-    plt.imshow(grad, cmap='gray')
-    plt.title('Resultat')
-    plt.show()
+    lap_pad = np.zeros((M+2,N+2))
+    lap_pad[1:-1,1:-1] = lap                                             
+    result = np.zeros((M,N))
+
+    # Trouver les "zeros-crossing" c'est à dire les bords à l'aide d'un filtre Laplacien
+    for i in range(1,M+1):
+        for j in range(1,N+1):
+            if lap_pad[i,j]<0:
+                for x,y in (-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1):
+                        if lap_pad[i+x,j+y]>0:
+                            result[i-1,j-1] = 1
+
+    A = detectCircles(result, 14, 20, radius=[50, 5])
+    plotCircles(A)
+
+    # plt.imshow(fx, cmap='gray')
+    # plt.title('Selon x')
+    # plt.show()
+
+    # plt.imshow(fx, cmap='gray')
+    # plt.title('Selon y')
+    # plt.show()
+
+    # plt.imshow(grad, cmap='gray')
+    # plt.title('Resultat')
+    # print(grad)
+    # plt.show()
 
     if output:
         imout = Image.fromarray(grad).convert("L")
@@ -199,9 +228,75 @@ def canny_test(img):
     plt.show()
     return Ix, Iy
 
+def detectCircles(img,threshold,region=None, radius=None):
+
+    (M,N) = img.shape
+
+    if radius == None:
+        radius = [max(M, N), 5]
+
+    [R_max,R_min] = radius
+    R = R_max - R_min
+
+    # Tableau stockage des points de Hough : 3 dimensions => 1) Rayon   -  2 & 3) coordonnées X & Y
+    # On ajoute un bord de 2*R_max pour eviter les dépassements de taille
+    A = np.zeros((R_max, M+2*R_max, N+2*R_max))
+    B = np.zeros((R_max, M+2*R_max, N+2*R_max))
+
+    # Calculer tous les angles possibles (pour la calcul des equations de cercle ensuite)
+    theta = np.arange(0,360)*np.pi/180
+
+    # Coordonnées des points retenus (point=1)
+    edges = np.argwhere(img[:,:])
+
+    # On itère sur les valeurs de rayons
+    for val in range(R):
+
+        # Valeur du rayon
+        r = R_min+val
+
+        # Créer un modèle de cercle (tableau de zeros à la taille nécessaire)
+        circle_temp = np.zeros((2*(r+1),2*(r+1)))
+
+        # Centre du cercle dans notre modèle
+        (m,n) = (r+1,r+1)
+
+        for angle in theta:
+            # Eqation de cercle
+            x = int(np.round(r*np.cos(angle)))
+            y = int(np.round(r*np.sin(angle)))
+
+            # Pour compléter notre modèle (1 pour les points du cercle, 0 sinon)
+            circle_temp[m+x,n+y] = 1
+
+        total = np.argwhere(circle_temp).shape[0]
+
+        for x,y in edges:
+            X = [x-m+R_max,x+m+R_max]
+            Y= [y-n+R_max,y+n+R_max]
+            A[r,X[0]:X[1],Y[0]:Y[1]] += circle_temp
+        
+        #print(A[r][A[r]<threshold*total/r].shape, A[r].shape)
+        A[r][A[r]<threshold*total/r] = 0
+
+    return A[:,R_max:-R_max,R_max:-R_max]
+        
+def plotCircles(A):
+    img = plt.imread("images/circles.jpeg")
+    fig, ax = plt.subplots()
+
+    circleCoordinates = np.argwhere(A) 
+    print(circleCoordinates)
+    circle = []
+    for r,x,y in circleCoordinates:
+        ax.add_patch(plt.Circle((y,x),r,color='r',fill=False))
+    ax.imshow(img)
+    plt.show()
+
+
 #print(fill_edges_zeros(np.random.rand(3,2), 6, 1))
-#canny_filter(ImageOps.grayscale(Image.open("images/shapes.png")), 'shapes', output=True, verbose=False)
-gaussian_filter(((Image.open("images/chat2.png"))))
+canny_filter(ImageOps.grayscale(Image.open("images/circles.jpeg")), 30, 'lena', output=False, verbose=False)
+#gaussian_filter(((Image.open("images/chat2.png"))))
 
 
 
