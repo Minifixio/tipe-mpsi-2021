@@ -7,24 +7,6 @@ import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
 import scipy.misc
 
-chat_img = Image.open("images/chat.png")
-chat_img2 = Image.open("images/chat2.png")
-chat_np = np.array(chat_img)
-chat_np2 = np.array(chat_img2)
-
-a = np.array([
-    [[1, 2, 3], [1, 2, 3], [1, 2, 3]], 
-    [[4, 5, 6], [4, 5, 6], [4, 5, 6]], 
-    [[4, 5, 6], [4, 5, 6], [4, 5, 6]]
-    ])
-
-b = np.array([
-    [ 10, 20, 30, 40, 60 ],
-    [ 10, 20, 30, 40, 60 ],
-    [ 10, 20, 30, 40, 60 ],
-    [ 10, 20, 30, 40, 60 ]
-])
-
 # Générer un noyau Gaussien
 def gkern(kernlen, nsig):
     x = np.linspace(-nsig, nsig, kernlen+1)
@@ -133,7 +115,7 @@ def prod_conv(arr, ker, lum=True, greyscale=False, verbose=False):
 
 # Filtre de Canny : permet de faire une détection de bords
 # Etapes :
-# 1) utiliser un filtre gaussien pour réduire le bruit
+# 1) Utiliser un filtre gaussien pour réduire le bruit
 # 2) Utiliser deux gradients (un selon Ox et un selon Oy) pour faire un détection des bords selon les deux axes
 # 3) Combiner les deux gradients selon Ox et Oy pour obtenir un graident optimal obtenu selon la formule G = \sqrt{Gx^2 + Gy^2} (ensuite normalisé)
 def canny_filter(im, threshold, output_name, verbose=False, output=False):
@@ -142,6 +124,7 @@ def canny_filter(im, threshold, output_name, verbose=False, output=False):
 
     gker = gkern(3, 0.5)
 
+    # Gradient kernels
     gx = np.array([
         [-1, 0, 1], 
         [-2, 0, 2], 
@@ -151,11 +134,11 @@ def canny_filter(im, threshold, output_name, verbose=False, output=False):
         [0, 0, 0], 
         [1, 2, 1]])
 
+    # Laplacian kernel
     laplacian = np.array([
         [1,1,1],
         [1,-8,1],
         [1,1,1]])
-
 
     fgauss = convolulte(arr, gker, greyscale=True, verbose=verbose)
 
@@ -286,15 +269,14 @@ def plotCircles(A):
     fig, ax = plt.subplots()
 
     circleCoordinates = np.argwhere(A) 
-    print(circleCoordinates)
     circle = []
+
     for r,x,y in circleCoordinates:
         ax.add_patch(plt.Circle((y,x),r,color='r',fill=False))
     ax.imshow(img)
     plt.show()
 
 
-#print(fill_edges_zeros(np.random.rand(3,2), 6, 1))
 canny_filter(ImageOps.grayscale(Image.open("images/circles.jpeg")), 30, 'lena', output=False, verbose=False)
 #gaussian_filter(((Image.open("images/chat2.png"))))
 
